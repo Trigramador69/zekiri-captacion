@@ -1,0 +1,823 @@
+{
+ "config": [
+  {
+   "clave": "mi_nombre",
+   "valor": "Diego",
+   "nota": "Nombre que firma los mensajes. Agrega el apellido si lo usas"
+  },
+  {
+   "clave": "mi_cargo",
+   "valor": "COMPLETAR",
+   "nota": "Cargo real en Zékiri"
+  },
+  {
+   "clave": "mi_numero",
+   "valor": "COMPLETAR",
+   "nota": "Formato +591XXXXXXXX"
+  },
+  {
+   "clave": "sitio_web",
+   "valor": "COMPLETAR",
+   "nota": "Sitio de Zékiri"
+  },
+  {
+   "clave": "umbral_revision_base",
+   "valor": 5,
+   "nota": "Puntaje base mínimo para pasar a revisión"
+  },
+  {
+   "clave": "umbral_A",
+   "valor": 11,
+   "nota": "Puntaje final mínimo para prioridad A"
+  },
+  {
+   "clave": "umbral_B",
+   "valor": 7,
+   "nota": "Puntaje final mínimo para prioridad B (menos = C)"
+  },
+  {
+   "clave": "limite_nuevos_dia_sem1",
+   "valor": 20,
+   "nota": "Chats nuevos por día en WhatsApp, semana 1"
+  },
+  {
+   "clave": "limite_nuevos_dia_sem2",
+   "valor": 35,
+   "nota": "Semana 2+ si no hay alertas (rango 30-40)"
+  },
+  {
+   "clave": "limite_li_invitaciones_dia",
+   "valor": 12,
+   "nota": "Invitaciones LinkedIn por día, semana 1 (10-15)"
+  },
+  {
+   "clave": "max_mensajes_sin_respuesta",
+   "valor": 3,
+   "nota": "Incluye el primer mensaje"
+  },
+  {
+   "clave": "responsable_reunion_default",
+   "valor": "Diego",
+   "nota": "Quién atiende si no se indica otra persona"
+  }
+ ],
+ "plantillas": [
+  {
+   "id": "REC_SALUDO_A",
+   "paso": "Primer contacto",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": "A",
+   "texto": "Buenos días, ¿me comunico con {empresa}?",
+   "notas": "Paso 1 de la variante A"
+  },
+  {
+   "id": "REC_PRESENTACION",
+   "paso": "Primer contacto",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": "A",
+   "texto": "Gracias. Mi nombre es {mi_nombre}, soy {mi_cargo} en Zékiri, una empresa boliviana de desarrollo de software y automatización de procesos con más de 10 años de experiencia. Quisiera presentarle nuestro trabajo a la gerencia de {empresa}. ¿Me podría indicar con quién debería hablar y cómo contactarle?",
+   "notas": "Paso 2 de la variante A, cuando responden"
+  },
+  {
+   "id": "REC_DIRECTO_B",
+   "paso": "Primer contacto",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": "B",
+   "texto": "Buenos días. Mi nombre es {mi_nombre}, soy {mi_cargo} en Zékiri, una empresa boliviana de desarrollo de software y automatización de procesos con más de 10 años de experiencia. Quisiera presentarle nuestro trabajo a la gerencia de {empresa}. ¿Me podría indicar con quién debería hablar y cómo contactarle?",
+   "notas": "Variante B, un solo paso"
+  },
+  {
+   "id": "REC_QUE_SE_TRATA",
+   "paso": "Respuesta",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Ayudamos a empresas a ordenar y automatizar procesos: sistemas a medida, integraciones entre los programas que ya usan y automatizaciones por WhatsApp. Lo que busco es una conversación corta con gerencia para entender cómo trabajan hoy. No es una reunión de venta.",
+   "notas": null
+  },
+  {
+   "id": "REC_SIN_NUMERO_1",
+   "paso": "Respuesta",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Entiendo. ¿Me podría decir su nombre y a qué correo puedo escribirle?",
+   "notas": "Si dan correo, usar GER_CORREO"
+  },
+  {
+   "id": "REC_SIN_NUMERO_2",
+   "paso": "Respuesta",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Sin problema. ¿Le podría pasar mi número, {mi_numero}, con este mensaje? Muchas gracias por su ayuda.",
+   "notas": null
+  },
+  {
+   "id": "REC_SEG_SALUDO",
+   "paso": "Seguimiento",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": "A",
+   "texto": "Buenos días, le escribo de nuevo por si no le llegó mi mensaje. ¿Me comunico con {empresa}?",
+   "notas": "+2 días hábiles; luego cerrar"
+  },
+  {
+   "id": "REC_SEG_DERIVACION",
+   "paso": "Seguimiento",
+   "rol": "recepcion",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Buenos días, quería saber si pudo consultar con quién puedo hablar en gerencia. Gracias.",
+   "notas": "+3 días hábiles; luego cerrar"
+  },
+  {
+   "id": "GER_DERIVADO",
+   "paso": "Primer contacto",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Buenas tardes, {nombre}. Soy {mi_nombre}, de Zékiri. {persona_derivo} de {empresa} me compartió su contacto. Trabajamos con empresas de {ciudad} revisando cómo usan sus sistemas y dónde se pierde tiempo en tareas manuales. ¿Tendría 30 minutos esta semana o la próxima para contarme cómo funcionan hoy? En esa primera reunión yo escucho. Si vemos algo útil, en una segunda le llevo una propuesta concreta.",
+   "notas": "Con dato: agregar 'Vi que {dato_personalizacion}.' tras la segunda oración"
+  },
+  {
+   "id": "GER_FRIO",
+   "paso": "Primer contacto",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Buenas tardes, {nombre}. Soy {mi_nombre}, de Zékiri, una empresa boliviana de software y automatización con más de 10 años de experiencia. Le escribo porque trabajamos con empresas de {sector} en {ciudad} revisando dónde se pierde tiempo en tareas manuales. ¿Tendría 30 minutos en las próximas semanas para contarme cómo lo manejan en {empresa}? En esa primera reunión yo escucho.",
+   "notas": "Sin derivación (número del sitio web o perfil público)"
+  },
+  {
+   "id": "GER_SEG_1",
+   "paso": "Seguimiento",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "{nombre}, le escribo de nuevo por si se le pasó mi mensaje. ¿Le acomoda el martes o el jueves a media mañana?",
+   "notas": "Mensaje 2; +3 días hábiles"
+  },
+  {
+   "id": "GER_SEG_FINAL",
+   "paso": "Seguimiento",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Entiendo que son semanas cargadas. Si prefiere dejarlo para más adelante, dígame una fecha aproximada y le escribo entonces. Si no, no le insisto más. Saludos.",
+   "notas": "Mensaje 3; +7 días hábiles. Luego CERRADO_SIN_RESPUESTA a +7"
+  },
+  {
+   "id": "GER_CORREO",
+   "paso": "Primer contacto",
+   "rol": "gerente",
+   "canal": "correo",
+   "variante": null,
+   "texto": "Asunto: {empresa} — conversación de 30 minutos sobre procesos\n\nEstimado/a {nombre}:\n\nMi nombre es {mi_nombre}, soy {mi_cargo} en Zékiri, una empresa boliviana de desarrollo de software y automatización de procesos con más de 10 años de experiencia. {persona_derivo} de {empresa} me indicó que le escribiera.\n\nTrabajamos con empresas de {ciudad} revisando cómo usan sus sistemas y dónde se pierde tiempo en tareas manuales. Me gustaría una conversación de 30 minutos para entender cómo trabajan hoy; en esa primera reunión solo escucho, y si vemos algo útil, le llevo una propuesta concreta en una segunda.\n\n¿Le acomoda algún día de la próxima semana? Adjunto una página con ejemplos de nuestro trabajo.\n\nSaludos,\n{mi_nombre} · {mi_numero} · {sitio_web}",
+   "notas": "Adjuntar portafolio de 1 página"
+  },
+  {
+   "id": "REU_CONFIRMACION",
+   "paso": "Reunión",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Perfecto. Le confirmo {dia} a las {hora}, {modalidad}. Si le surge algo, me avisa por aquí y lo movemos.",
+   "notas": "Si atiende otra persona: agregar 'En la reunión va a estar {responsable_reunion}, {cargo_responsable} de Zékiri.'"
+  },
+  {
+   "id": "REU_RECORDATORIO",
+   "paso": "Reunión",
+   "rol": "gerente",
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Le recuerdo nuestra reunión de mañana a las {hora}. ¿Sigue en pie?",
+   "notas": "Día hábil anterior"
+  },
+  {
+   "id": "OBJ_NO_INTERESA",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Entendido, gracias por responder. ¿Prefiere que no le vuelva a escribir, o le puedo consultar en unos meses?",
+   "notas": "Si dice que no: NO_CONTACTAR"
+  },
+  {
+   "id": "OBJ_YA_TIENEN",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Qué bueno. Justamente muchas veces trabajamos sobre lo que ya tienen, conectando sistemas o automatizando lo que hoy se hace a mano. ¿Le parece si conversamos 20 minutos para ver si hay algo así?",
+   "notas": null
+  },
+  {
+   "id": "OBJ_MANDAME_INFO",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Claro. ¿A qué correo? Le envío una página con ejemplos. Y si después de verla le hace sentido, coordinamos 20 minutos.",
+   "notas": "Enviar portafolio"
+  },
+  {
+   "id": "OBJ_PRECIO",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Depende mucho del proceso. Por eso la primera conversación es para entender cómo trabajan. La reunión no tiene costo y después le llevo una cotización concreta.",
+   "notas": null
+  },
+  {
+   "id": "OBJ_SIN_PRESUPUESTO",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Entendido. La primera reunión no compromete nada. Si prefiere, le escribo en {mes}. ¿Le parece?",
+   "notas": null
+  },
+  {
+   "id": "OBJ_DE_DONDE",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Lo tomé de la ficha pública de {empresa} en Google Maps. Si prefiere que no le escriba, lo anoto y no vuelvo a contactarle.",
+   "notas": "Si fue derivado: 'me lo pasó {persona_derivo}'"
+  },
+  {
+   "id": "OBJ_ES_BOT",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "No, le escribo yo, {mi_nombre}. Uso herramientas para armar la lista de empresas y preparar borradores, pero cada mensaje lo reviso y lo envío yo.",
+   "notas": "Siempre la verdad"
+  },
+  {
+   "id": "OBJ_NO_ESCRIBIR",
+   "paso": "Objeción",
+   "rol": null,
+   "canal": "WhatsApp",
+   "variante": null,
+   "texto": "Entendido, disculpe la molestia. No volveré a escribirle.",
+   "notas": "NO_CONTACTAR inmediato, en todos los canales"
+  },
+  {
+   "id": "LI_INVITACION",
+   "paso": "Primer contacto",
+   "rol": "gerente",
+   "canal": "LinkedIn",
+   "variante": null,
+   "texto": "Hola, {nombre}. Soy {mi_nombre}, de Zékiri, empresa boliviana de software y automatización. Me gustaría conectar con gerentes de {sector} en {ciudad}.",
+   "notas": "Nota de invitación"
+  },
+  {
+   "id": "LI_AL_ACEPTAR",
+   "paso": "Primer contacto",
+   "rol": "gerente",
+   "canal": "LinkedIn",
+   "variante": null,
+   "texto": "Gracias por conectar, {nombre}. Estamos conversando con empresas de {sector} sobre cómo usan sus sistemas y dónde se pierde tiempo en tareas manuales. ¿Tendría 30 minutos en las próximas semanas para contarme cómo lo manejan en {empresa}? Solo escucho; si veo algo útil, le preparo una propuesta.",
+   "notas": null
+  },
+  {
+   "id": "LI_SEGUIMIENTO",
+   "paso": "Seguimiento",
+   "rol": "gerente",
+   "canal": "LinkedIn",
+   "variante": null,
+   "texto": "{nombre}, ¿le sirve conversar o lo dejamos para otro momento? Sin problema en cualquier caso.",
+   "notas": "Único; +7 días hábiles"
+  },
+  {
+   "id": "LI_PRESENTACION_JEFE",
+   "paso": "Presentación",
+   "rol": "gerente",
+   "canal": "LinkedIn",
+   "variante": null,
+   "texto": "{nombre}, te presento a {mi_nombre} de mi equipo. Están haciendo un trabajo interesante en automatización, y creo que vale 20 minutos.",
+   "notas": "Lo escribe el jefe"
+  }
+ ],
+ "feriados": [
+  {
+   "fecha": "2026-12-25",
+   "dia": "viernes",
+   "nombre": "Navidad",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-01-01",
+   "dia": "viernes",
+   "nombre": "Año Nuevo",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-01-22",
+   "dia": "viernes",
+   "nombre": "Día del Estado Plurinacional",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-02-08",
+   "dia": "lunes",
+   "nombre": "Carnaval (lunes)",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-02-09",
+   "dia": "martes",
+   "nombre": "Carnaval (martes)",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-03-26",
+   "dia": "viernes",
+   "nombre": "Viernes Santo",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-05-01",
+   "dia": "sábado",
+   "nombre": "Día del Trabajo",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": "Cae en fin de semana: verificar si el decreto lo traslada"
+  },
+  {
+   "fecha": "2027-05-27",
+   "dia": "jueves",
+   "nombre": "Corpus Christi",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-06-21",
+   "dia": "lunes",
+   "nombre": "Año Nuevo Andino Amazónico y Chaqueño",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-07-16",
+   "dia": "viernes",
+   "nombre": "Efeméride de La Paz",
+   "ambito": "LPZ",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-08-06",
+   "dia": "viernes",
+   "nombre": "Día de la Independencia",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-09-14",
+   "dia": "martes",
+   "nombre": "Efeméride de Cochabamba",
+   "ambito": "CBBA",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-09-24",
+   "dia": "viernes",
+   "nombre": "Efeméride de Santa Cruz",
+   "ambito": "SCZ",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-11-02",
+   "dia": "martes",
+   "nombre": "Todos Santos",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": null
+  },
+  {
+   "fecha": "2027-12-25",
+   "dia": "sábado",
+   "nombre": "Navidad",
+   "ambito": "nacional",
+   "verificado": "NO",
+   "nota": "Cae en fin de semana: verificar si el decreto lo traslada"
+  }
+ ],
+ "consultas": [
+  {
+   "id": "Q001",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "distribuidora mayorista",
+   "texto_consulta": "distribuidora mayorista en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mar 10",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q002",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "importadora",
+   "texto_consulta": "importadora en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mar 10",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q003",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Agro",
+   "termino": "empresa agroindustrial",
+   "texto_consulta": "empresa agroindustrial en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q004",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "clínica",
+   "texto_consulta": "clínica en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mar 10",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q005",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "laboratorio clínico",
+   "texto_consulta": "laboratorio clínico en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mar 10",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q006",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "empresa de transporte de carga",
+   "texto_consulta": "empresa de transporte de carga en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q007",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "agencia despachante de aduana",
+   "texto_consulta": "agencia despachante de aduana en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q008",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Industria",
+   "termino": "fábrica de alimentos",
+   "texto_consulta": "fábrica de alimentos en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q009",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Construcción / inmobiliaria",
+   "termino": "constructora",
+   "texto_consulta": "constructora en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q010",
+   "ciudad": "SCZ",
+   "zona": null,
+   "sector": "Educación",
+   "termino": "universidad privada",
+   "texto_consulta": "universidad privada en Santa Cruz de la Sierra, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q011",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "distribuidora mayorista",
+   "texto_consulta": "distribuidora mayorista en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mié 11",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q012",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "importadora",
+   "texto_consulta": "importadora en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mié 11",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q013",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "distribuidora de repuestos",
+   "texto_consulta": "distribuidora de repuestos en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mié 11",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q014",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "clínica",
+   "texto_consulta": "clínica en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mié 11",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q015",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "laboratorio clínico",
+   "texto_consulta": "laboratorio clínico en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Mié 11",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q016",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "empresa de transporte de carga",
+   "texto_consulta": "empresa de transporte de carga en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q017",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "agencia despachante de aduana",
+   "texto_consulta": "agencia despachante de aduana en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q018",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Industria",
+   "termino": "fábrica de alimentos",
+   "texto_consulta": "fábrica de alimentos en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q019",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Construcción / inmobiliaria",
+   "termino": "constructora",
+   "texto_consulta": "constructora en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q020",
+   "ciudad": "LPZ",
+   "zona": null,
+   "sector": "Educación",
+   "termino": "universidad privada",
+   "texto_consulta": "universidad privada en La Paz, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q021",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "distribuidora mayorista",
+   "texto_consulta": "distribuidora mayorista en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Jue 12",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q022",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "importadora",
+   "texto_consulta": "importadora en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Jue 12",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q023",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Comercio / importación",
+   "termino": "distribuidora de repuestos",
+   "texto_consulta": "distribuidora de repuestos en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Jue 12",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q024",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "clínica",
+   "texto_consulta": "clínica en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Jue 12",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q025",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Salud",
+   "termino": "laboratorio clínico",
+   "texto_consulta": "laboratorio clínico en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": "Jue 12",
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q026",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "empresa de transporte de carga",
+   "texto_consulta": "empresa de transporte de carga en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q027",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Logística",
+   "termino": "agencia despachante de aduana",
+   "texto_consulta": "agencia despachante de aduana en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q028",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Industria",
+   "termino": "fábrica de alimentos",
+   "texto_consulta": "fábrica de alimentos en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q029",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Construcción / inmobiliaria",
+   "termino": "constructora",
+   "texto_consulta": "constructora en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  },
+  {
+   "id": "Q030",
+   "ciudad": "CBBA",
+   "zona": null,
+   "sector": "Educación",
+   "termino": "universidad privada",
+   "texto_consulta": "universidad privada en Cochabamba, Bolivia",
+   "activa": "SI",
+   "orden_semana1": null,
+   "ultima_ejecucion": null,
+   "resultados": null,
+   "notas": null
+  }
+ ]
+}

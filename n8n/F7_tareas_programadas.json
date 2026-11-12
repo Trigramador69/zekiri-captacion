@@ -1,0 +1,90 @@
+{
+  "name": "Zékiri · F7 · Tareas programadas",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## F7 — Tareas programadas\nCada 15 minutos despierta a la web de captación, que:\n- cierra contactos vencidos\n- manda el resumen del día (8:30) y el reporte de los lunes\n- avisa antes de cada reunión con el WhatsApp listo\n- corre las búsquedas de Places del domingo\n\n**Antes de activar:** en el nodo *Llamar a la web* reemplaza la URL de la web y el secreto (TAREAS_SECRETO de Vercel).",
+        "width": 460,
+        "height": 300
+      },
+      "id": "f7000000-0000-4000-8000-000000000001",
+      "name": "Instrucciones",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "f7000000-0000-4000-8000-000000000002",
+      "name": "Cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://PEGAR-URL-DE-LA-WEB.vercel.app/api/tareas",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer PEGAR_TAREAS_SECRETO"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f7000000-0000-4000-8000-000000000003",
+      "name": "Llamar a la web",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Llamar a la web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/La_Paz",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {},
+  "active": false
+}
