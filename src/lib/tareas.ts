@@ -214,7 +214,12 @@ async function correoResumen(sb: SB, ctx: Contexto, fecha: string, appUrl: strin
     ${lineasResp ? `<h2 style="font-size:16px;margin:20px 0 8px">Esperan tu respuesta</h2><ul style="margin:0;padding-left:18px">${lineasResp}</ul>` : ""}`;
   if (conReporte) cuerpo += await bloqueReporte(sb, fecha);
   const total = (pend.count ?? 0) + nNuevos;
-  return [`Hoy: ${total} acciones${(reus.data ?? []).length ? ` y ${(reus.data ?? []).length} reunión(es)` : ""}`, plantillaCorreo("Tu día en captación", cuerpo, { texto: "Abrir la cola", url: `${appUrl}/cola` })];
+  const nReus = (reus.data ?? []).length;
+  const asunto =
+    total === 0 && nReus === 0
+      ? "Hoy: sin acciones pendientes"
+      : `Hoy: ${total} ${total === 1 ? "acción" : "acciones"}${nReus ? ` y ${nReus} ${nReus === 1 ? "reunión" : "reuniones"}` : ""}`;
+  return [asunto, plantillaCorreo("Tu día en captación", cuerpo, { texto: "Abrir la cola", url: `${appUrl}/cola` })];
 }
 
 /** Reporte de la semana anterior (lunes a domingo). */

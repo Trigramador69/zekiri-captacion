@@ -120,7 +120,7 @@ La web tiene un punto `POST /api/tareas` que hace todo lo que debe pasar solo:
 
 Cada aviso se registra para no mandarlo dos veces. Todo se ajusta en **Configuración → Integraciones**, donde también se ve cuándo corrió por última vez y hay un botón **Ejecutar ahora**.
 
-n8n solo hace de reloj (tiene que poder llegar a la web, así que funciona cuando la web está publicada):
+n8n solo hace de reloj: llama cada 15 minutos de 7:00 a 22:00, hora de Bolivia (cron `*/15 7-21 * * *`, unas 1.800 ejecuciones al mes). Cada 15 minutos para que el aviso de reunión llegue entre 60 y 45 minutos antes; de noche no hace falta. Tiene que poder llegar a la web, así que funciona cuando la web está publicada:
 
 1. n8n → **Import from File** → `n8n/F7_tareas_programadas.json`.
 2. En el nodo **Llamar a la web**: cambia la URL por la de tu web y `PEGAR_TAREAS_SECRETO` por el valor de `TAREAS_SECRETO`.

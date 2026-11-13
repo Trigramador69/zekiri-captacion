@@ -61,7 +61,10 @@ export function Integraciones({ configurado, correo, conexion, ultimaEjecucion, 
     });
   };
 
-  const relojActivo = ultimaEjecucion && Date.now() - new Date(ultimaEjecucion.enviado).getTime() < 40 * 60000;
+  // n8n corre cada 15 min de 7:00 a 22:00 (Bolivia): de noche el último llamado es de las 21:45.
+  const horaBolivia = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: "America/La_Paz" }).format(new Date()));
+  const margenMin = horaBolivia >= 8 && horaBolivia < 22 ? 40 : 11 * 60;
+  const relojActivo = ultimaEjecucion && Date.now() - new Date(ultimaEjecucion.enviado).getTime() < margenMin * 60000;
 
   return (
     <div className="space-y-6">
@@ -167,7 +170,7 @@ export function Integraciones({ configurado, correo, conexion, ultimaEjecucion, 
             <div>
               <h3 className="font-semibold">Tareas programadas (n8n)</h3>
               <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                n8n despierta al sistema cada 15 minutos: cierra contactos vencidos, manda los avisos y corre las búsquedas de los domingos. «Ejecutar ahora» hace lo
+                n8n despierta al sistema cada 15 minutos, de 7:00 a 22:00: cierra contactos vencidos, manda los avisos y corre las búsquedas de los domingos. «Ejecutar ahora» hace lo
                 mismo a mano, sin necesitar n8n.
               </p>
               <p className="mt-2 text-sm">

@@ -96,7 +96,13 @@ export function SubirMaterial() {
         setD({ titulo: "", descripcion: "", sector: "General", url: "" });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo subir");
+      const m = e instanceof Error ? e.message : "";
+      toast.error(
+        /failed to fetch|networkerror|load failed/i.test(m)
+          ? "No se pudo conectar con el almacenamiento. Revisa tu conexión o pausa el bloqueador de anuncios en esta página y vuelve a intentar."
+          : m || "No se pudo subir",
+        { duration: 10000 }
+      );
     } finally {
       setSubiendo(false);
     }
