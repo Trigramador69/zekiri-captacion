@@ -208,15 +208,17 @@ export async function crearContactoRecepcion(sb: SB, empresa: Empresa, ctx: Cont
   if (existente) return existente.contacto_id as string;
   const { count } = await sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("rol_contacto", "recepcion");
   const variante = (count ?? 0) % 2 === 0 ? "A" : "B";
-  const canal = CAP.canalInicial(empresa.tel_tipo);
+  // El WhatsApp publicado en su web tiene prioridad sobre el teléfono de Google (suele ser fijo).
+  const usaWhatsappWeb = Boolean(empresa.whatsapp) && empresa.tel_tipo !== "celular";
+  const canal = usaWhatsappWeb ? "WhatsApp" : CAP.canalInicial(empresa.tel_tipo);
   return crearContacto(
     sb,
     {
       place_id: empresa.place_id,
       rol_contacto: "recepcion",
-      origen_contacto: "ficha_google",
+      origen_contacto: usaWhatsappWeb ? "web_empresa" : "ficha_google",
       canal,
-      telefono_e164: empresa.tel_publico,
+      telefono_e164: usaWhatsappWeb ? empresa.whatsapp : empresa.tel_publico,
       variante_mensaje: variante,
     },
     empresa,

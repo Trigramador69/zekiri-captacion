@@ -504,7 +504,9 @@ export async function correrConsulta(id: string) {
     const r = await ejecutarConsulta(sb, c);
     return {
       ok: true,
-      mensaje: `${r.encontradas} resultados, ${r.nuevas} empresas nuevas, ${r.paraRevisar} para revisar (${r.solicitudes} solicitudes a Google)${r.quedabanMas ? ". Quedaban más: divide la búsqueda por zona" : ""}`,
+      mensaje: `${r.encontradas} resultados, ${r.nuevas} empresas nuevas, ${r.paraRevisar} para revisar (${r.solicitudes} solicitudes a Google)${
+        r.sitiosLeidos ? `. Se leyeron ${r.sitiosLeidos} sitios web: ${r.conWhatsapp} con WhatsApp` : ""
+      }${r.quedabanMas ? ". Quedaban más: divide la búsqueda por zona" : ""}`,
     };
   });
 }
@@ -601,7 +603,7 @@ export async function buscar(texto: string): Promise<ResultadoBusqueda> {
       sb
         .from("empresas")
         .select("place_id, empresa, ciudad, estado_empresa")
-        .or(porTel ? `empresa.ilike.%${q}%,tel_publico.ilike.%${dig}%` : `empresa.ilike.%${q}%`)
+        .or(porTel ? `empresa.ilike.%${q}%,tel_publico.ilike.%${dig}%,whatsapp.ilike.%${dig}%` : `empresa.ilike.%${q}%`)
         .order("estado_empresa")
         .limit(10),
     ]);

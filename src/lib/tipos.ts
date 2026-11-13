@@ -23,6 +23,10 @@ export type Empresa = {
   dato_personalizacion: string | null;
   fecha_alta: string;
   notas: string | null;
+  whatsapp: string | null;
+  correo: string | null;
+  redes: { instagram?: string; facebook?: string; linkedin?: string; tiktok?: string } | null;
+  web_leida: string | null;
 };
 
 export type Contacto = {

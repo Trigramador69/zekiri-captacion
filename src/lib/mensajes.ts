@@ -24,7 +24,8 @@ export function waLink(telefono: string | null | undefined, texto?: string) {
 }
 
 export function mapsLink(placeId: string, nombre: string) {
-  if (placeId.startsWith("MAN-")) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nombre)}`;
+  // Empresas agregadas a mano (MAN-) o de listas externas (ARI-): no tienen ID de Google.
+  if (/^[A-Z]{3}-\d+$/.test(placeId)) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nombre)}`;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nombre)}&query_place_id=${encodeURIComponent(placeId)}`;
 }
 

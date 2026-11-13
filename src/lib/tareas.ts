@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { CAP, cargarContexto, limiteNuevos, procesarVencimientos, renderMensaje } from "./motor";
 import { enviarCorreo, remitente, smtpConfigurado } from "./correo";
 import { ejecutarConsulta } from "./places";
+import { leerSitiosPendientes } from "./enriquecer";
+import { filtroRevisar } from "./constantes";
 import { esVirtual, horaBolivia24, nombreCorto, telLegible, waLink } from "./mensajes";
 import type { Contacto, Contexto, Empresa } from "./tipos";
 
@@ -73,6 +75,7 @@ export type ResultadoTareas = { hecho: string[]; errores: string[] };
  * `appUrl` es la dirección de la web, para los botones de los correos.
  */
 export async function ejecutarTareas(sb: SB, { appUrl, forzar = [] as string[] }: { appUrl: string; forzar?: string[] }): Promise<ResultadoTareas> {
+  const inicioTareas = Date.now();
   const hecho: string[] = [];
   const errores: string[] = [];
   const ctx = await cargarContexto(sb);
@@ -151,7 +154,8 @@ export async function ejecutarTareas(sb: SB, { appUrl, forzar = [] as string[] }
           .limit(Math.min(10, nBusquedas));
         const partes: string[] = [];
         for (const q of qs ?? []) {
-          const r = await ejecutarConsulta(sb, q);
+          // Los sitios de estas empresas se leen en las siguientes vueltas del reloj.
+          const r = await ejecutarConsulta(sb, q, { presupuestoSitiosMs: 0 });
           partes.push(`${q.termino} (${q.ciudad}): ${r.nuevas} nuevas, ${r.paraRevisar} para revisar`);
         }
         await marcar(sb, clave, partes.join(" · "));
@@ -159,6 +163,17 @@ export async function ejecutarTareas(sb: SB, { appUrl, forzar = [] as string[] }
       } catch (e) {
         errores.push(`búsquedas: ${msg(e)}`);
       }
+    }
+  }
+
+  // Sitios web pendientes (WhatsApp, correo y redes), con el tiempo que quede de esta vuelta.
+  const restante = 50_000 - (Date.now() - inicioTareas);
+  if (restante > 15_000) {
+    try {
+      const s = await leerSitiosPendientes(sb, { limite: 20, presupuestoMs: Math.min(restante, 35_000) });
+      if (s.leidas) hecho.push(`${s.leidas} sitios web leídos (${s.conWhatsapp} con WhatsApp)`);
+    } catch (e) {
+      errores.push(`sitios web: ${msg(e)}`);
     }
   }
 
@@ -194,7 +209,7 @@ async function correoResumen(sb: SB, ctx: Contexto, fecha: string, appUrl: strin
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("estado", "LISTO").lte("fecha_proxima", fecha),
     sb.from("contactos").select("contacto_id, nombre, ultima_respuesta, empresas(empresa)").eq("estado", "RESPONDIO").limit(5),
     sb.from("contactos").select("nombre, fecha_reunion, modalidad_reunion, empresas(empresa)").eq("estado", "REUNION_AGENDADA").gte("fecha_reunion", inicioDia).lte("fecha_reunion", finDia).order("fecha_reunion"),
-    sb.from("empresas").select("place_id", { count: "exact", head: true }).eq("estado_empresa", "NUEVA").or(`puntaje_base.gte.${Number(ctx.config.umbral_revision_base) || 5},consulta_origen.eq.manual`),
+    sb.from("empresas").select("place_id", { count: "exact", head: true }).eq("estado_empresa", "NUEVA").or(filtroRevisar(Number(ctx.config.umbral_revision_base) || 5)),
   ]);
   const limite = limiteNuevos(ctx, fecha);
   const nNuevos = Math.min(nuevos.count ?? 0, limite);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { crearClienteServidor } from "./supabase/server";
 import { CAP, cargarContexto, hoy, limiteNuevos, prioridadDe, procesarVencimientos } from "./motor";
 import type { ContactoConEmpresa, Empresa } from "./tipos";
+import { filtroRevisar } from "./constantes";
 
 export const ESTADOS_ACCIONABLES = [
   "LISTO", "RESPONDIO", "LI_CONECTADO", "REUNION_AGENDADA", "REUNION_1_HECHA", "PROPUESTA_ENVIADA", "REUNION_2",
@@ -35,7 +36,7 @@ export const contadores = cache(async () => {
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).in("estado", ESTADOS_ACCIONABLES.filter((e) => e !== "LISTO")).lte("fecha_proxima", h),
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("estado", "LISTO").lte("fecha_proxima", h),
     sb.from("eventos").select("id", { count: "exact", head: true }).eq("estado_anterior", "LISTO").neq("estado_nuevo", "LISTO").gte("fecha", `${h}T00:00:00-04:00`),
-    sb.from("empresas").select("place_id", { count: "exact", head: true }).eq("estado_empresa", "NUEVA").or(`puntaje_base.gte.${umbral},consulta_origen.eq.manual`),
+    sb.from("empresas").select("place_id", { count: "exact", head: true }).eq("estado_empresa", "NUEVA").or(filtroRevisar(umbral)),
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).in("estado", ["RESPONDIO", "LI_CONECTADO"]),
   ]);
   // Igual que la cola: los nuevos no pasan del límite del día.

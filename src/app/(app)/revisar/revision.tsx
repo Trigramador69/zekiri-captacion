@@ -12,6 +12,7 @@ import { CIUDADES, MOTIVOS_DESCARTE, SENALES_REVISION } from "@/lib/constantes";
 import { mapsLink, nombreCorto, telLegible } from "@/lib/mensajes";
 import type { Empresa } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
+import { ContactoWeb } from "@/components/contacto-web";
 
 type U = { revisionBase: number; A: number; B: number };
 
@@ -248,6 +249,8 @@ function Tarjeta({ e, u, alTerminar, alSaltar }: { e: Empresa; u: U; alTerminar:
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {e.sector} · {CIUDADES[e.ciudad as keyof typeof CIUDADES] ?? e.ciudad}
+              {e.zona ? ` · ${e.zona}` : ""}
+              {e.consulta_origen === "ariel" && <span className="ml-2 rounded-full bg-primary/12 px-2 py-0.5 normal-case tracking-normal text-primary">Lista de Ariel</span>}
             </p>
             <h2 className="mt-1 text-2xl font-semibold leading-tight tracking-tight">{e.empresa}</h2>
             {e.direccion && <p className="mt-1 text-sm text-muted-foreground">{e.direccion}</p>}
@@ -279,6 +282,10 @@ function Tarjeta({ e, u, alTerminar, alSaltar }: { e: Empresa; u: U; alTerminar:
             </span>
           )}
         </div>
+        <ContactoWeb empresa={e} />
+        {e.consulta_origen === "ariel" && e.notas && (
+          <p className="whitespace-pre-line rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{e.notas}</p>
+        )}
         <div className="flex flex-wrap gap-2 pt-1">
           <Button variant="outline" size="sm" asChild>
             <a href={mapsLink(e.place_id, e.empresa)} target="_blank" rel="noopener noreferrer">

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CAP } from "./motor";
+import { leerSitiosPendientes } from "./enriquecer";
 
 const ENDPOINT = "https://places.googleapis.com/v1/places:searchText";
 const FIELD_MASK = [
@@ -46,7 +47,7 @@ async function buscar(c: Consulta, clave: string, maxPaginas = 3) {
  * Corre una consulta de Places y guarda las empresas nuevas con su puntaje base.
  * No toca empresas que ya existen (las revisadas o en curso conservan sus datos).
  */
-export async function ejecutarConsulta(sb: SupabaseClient, c: Consulta) {
+export async function ejecutarConsulta(sb: SupabaseClient, c: Consulta, opciones: { presupuestoSitiosMs?: number } = {}) {
   const clave = process.env.PLACES_API_KEY;
   if (!clave) throw new Error("Falta PLACES_API_KEY en las variables de entorno del servidor.");
   const r = await buscar(c, clave);
@@ -112,11 +113,21 @@ export async function ejecutarConsulta(sb: SupabaseClient, c: Consulta) {
     if (error) throw new Error(error.message);
   }
   await sb.from("consultas").update({ ultima_ejecucion: new Date().toISOString(), resultados: r.lugares.length }).eq("id", c.id);
+
+  // Lee los sitios de las nuevas (WhatsApp, correo, redes). Lo que no alcance, lo terminan las tareas programadas.
+  const conWeb = nuevas.filter((n) => n.estado_empresa === "NUEVA" && n.web).map((n) => String(n.place_id));
+  const sitios = conWeb.length && opciones.presupuestoSitiosMs !== 0 ? await leerSitiosPendientes(sb, { ids: conWeb, presupuestoMs: opciones.presupuestoSitiosMs ?? 30_000 }).catch(() => null) : null;
+
   const umbral = 5;
+  const { count: paraRevisar } = nuevas.length
+    ? await sb.from("empresas").select("place_id", { count: "exact", head: true }).in("place_id", nuevas.map((n) => String(n.place_id))).eq("estado_empresa", "NUEVA").gte("puntaje_base", umbral)
+    : { count: 0 };
   return {
     encontradas: r.lugares.length,
     nuevas: nuevas.length,
-    paraRevisar: nuevas.filter((n) => n.estado_empresa === "NUEVA" && n.puntaje_base >= umbral).length,
+    paraRevisar: paraRevisar ?? 0,
+    sitiosLeidos: sitios?.leidas ?? 0,
+    conWhatsapp: sitios?.conWhatsapp ?? 0,
     solicitudes: r.paginas,
     quedabanMas: r.quedabanMas,
   };

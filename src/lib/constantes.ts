@@ -143,3 +143,7 @@ export function notaLegible(nota: string | null | undefined) {
   if (!nota) return "";
   return nota.replace(/\b([A-Z]{2,4}_[A-Z0-9_]+)\b(:?)/g, (todo, id: string, dos: string) => (NOMBRES_PLANTILLA[id] ? `${NOMBRES_PLANTILLA[id]}${dos}` : todo));
 }
+
+/** Orígenes que siempre pasan a Revisar aunque su puntaje base sea bajo (agregadas a mano o listas de otros). */
+export const ORIGENES_SIEMPRE_REVISAR = ["manual", "ariel"];
+export const filtroRevisar = (umbral: number) => `puntaje_base.gte.${umbral},consulta_origen.in.(${ORIGENES_SIEMPRE_REVISAR.join(",")})`;

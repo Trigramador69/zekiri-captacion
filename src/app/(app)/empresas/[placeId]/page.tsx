@@ -6,6 +6,7 @@ import { EstadoBadge, EstadoEmpresaBadge, EventoBadge, Pagina, Prioridad } from 
 import { contexto, usuarioActual } from "@/lib/datos";
 import { prioridadDe } from "@/lib/motor";
 import { CIUDADES, OBJECIONES, notaLegible } from "@/lib/constantes";
+import { ContactoWeb, origenLegible } from "@/components/contacto-web";
 import { mapsLink, telLegible } from "@/lib/mensajes";
 import type { Contacto, Empresa, Evento } from "@/lib/tipos";
 import { AccionesContacto, AgregarContacto, AccionesEmpresa, DatosEmpresa, FichaTraspaso } from "./cliente";
@@ -74,6 +75,7 @@ export default async function FichaEmpresa({ params }: { params: Promise<{ place
               </span>
             )}
           </div>
+          <ContactoWeb empresa={empresa} />
         </div>
         <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
           <div className="flex gap-6 text-center">
@@ -193,7 +195,7 @@ export default async function FichaEmpresa({ params }: { params: Promise<{ place
               <h3 className="mb-2 font-semibold">Puntaje base</h3>
               <p className="text-muted-foreground">{empresa.puntaje_detalle}</p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Búsqueda {empresa.consulta_origen} · alta {empresa.fecha_alta}
+                {origenLegible(empresa.consulta_origen)} · alta {empresa.fecha_alta}
               </p>
             </section>
           )}
