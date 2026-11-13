@@ -1,3 +1,4 @@
+import { plural } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, MessageSquareReply, ScanSearch, Send } from "lucide-react";
 import { EventoBadge, Kpi, Pagina } from "@/components/comunes";
@@ -59,9 +60,11 @@ export default async function HoyPage() {
           {cola.feriado
             ? "Hoy no se envían mensajes nuevos. Responde a quien te escriba."
             : cola.items.length
-              ? `Tienes ${cola.items.length} acciones en la cola${pendientes ? `, ${pendientes} son seguimientos o respuestas` : ""}.`
+              ? `Tienes ${plural(cola.items.length, "acción", "acciones")} en la cola${
+                  pendientes ? `, ${pendientes === cola.items.length ? (pendientes === 1 ? "es" : "todas son") : pendientes === 1 ? "1 es" : `${pendientes} son`} ${pendientes === 1 ? "seguimiento o respuesta" : "seguimientos o respuestas"}` : ""
+                }.`
               : "La cola está vacía. Buen momento para revisar empresas."}
-          {cola.cerrados > 0 && ` Se cerraron ${cola.cerrados} contactos sin respuesta.`}
+          {cola.cerrados > 0 && ` Se ${cola.cerrados === 1 ? "cerró 1 contacto" : `cerraron ${cola.cerrados} contactos`} sin respuesta.`}
         </p>
       </header>
 
@@ -104,7 +107,7 @@ export default async function HoyPage() {
           <Kpi etiqueta="Por responder" valor={respondieron.count ?? 0} detalle="contactos que respondieron" className="h-full transition-colors hover:border-primary/40" />
         </Link>
         <Link href="/revisar">
-          <Kpi etiqueta="Por revisar" valor={cont.revisar} detalle="empresas con base ≥ 5" className="h-full transition-colors hover:border-primary/40" />
+          <Kpi etiqueta="Por revisar" valor={cont.revisar} detalle="empresas listas para revisar" className="h-full transition-colors hover:border-primary/40" />
         </Link>
       </section>
 

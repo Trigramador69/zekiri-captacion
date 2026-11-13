@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -116,23 +116,35 @@ export function ColaTrabajo({
   }, [items, filtro, ciudad, ocultos, busqueda, enGrupo]);
   const [seleccion, setSeleccion] = useState<string | null>(seleccionInicial ?? visibles[0]?.contacto_id ?? null);
   const [verDetalleMovil, setVerDetalleMovil] = useState(Boolean(seleccionInicial));
+  // Contacto recién creado (por ejemplo, el gerente): se espera a que llegue del servidor y se abre.
+  const esperado = useRef<string | null>(null);
+  const seguir = (id: string) => {
+    esperado.current = id;
+    setBusqueda("");
+    setSeleccion(id);
+  };
 
   const actual = visibles.find((i) => i.contacto_id === seleccion) ?? visibles[0] ?? null;
 
   // Si el elegido salió de la lista: en Conversaciones la pestaña lo sigue; en la cola se pasa al siguiente.
   useEffect(() => {
-    if (!seleccion || visibles.some((i) => i.contacto_id === seleccion)) return;
+    if (!seleccion || visibles.some((i) => i.contacto_id === seleccion)) {
+      if (seleccion && esperado.current === seleccion) esperado.current = null;
+      return;
+    }
     const it = items.find((i) => i.contacto_id === seleccion);
-    if (!esCola && it && !busqueda) {
-      const g = grupoDe(it.estado);
+    if (!it && esperado.current === seleccion) return; // todavía no llegó del servidor
+    if (it && (!esCola || esperado.current === seleccion) && !busqueda) {
+      const g = esCola ? gruposUsados[0].k : grupoDe(it.estado);
       if (g && g !== filtro) {
         setFiltro(g);
         return;
       }
     }
+    esperado.current = null;
     setSeleccion(visibles[0]?.contacto_id ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibles, seleccion]);
+  }, [visibles, seleccion, items]);
 
   const mover = useCallback(
     (d: number) => {
@@ -265,6 +277,7 @@ export function ColaTrabajo({
             esCola={esCola}
             alVolver={() => setVerDetalleMovil(false)}
             alTerminar={() => (esCola ? setSeleccion(siguienteDe(actual.contacto_id)) : undefined)}
+            alSeguir={seguir}
             ocultar={(id, si) =>
               esCola &&
               setOcultos((o) => {
@@ -292,6 +305,7 @@ function Detalle({
   esCola,
   alVolver,
   alTerminar,
+  alSeguir,
   ocultar,
 }: {
   item: ItemCola;
@@ -302,6 +316,7 @@ function Detalle({
   esCola: boolean;
   alVolver: () => void;
   alTerminar: () => void;
+  alSeguir: (id: string) => void;
   ocultar: (id: string, si: boolean) => unknown;
 }) {
   const e = item.empresas;
@@ -599,7 +614,9 @@ function Detalle({
         {/* Resultados */}
         <div className="flex flex-wrap gap-2 border-t pt-5">
           <DialogoRespuesta contactoId={item.contacto_id} alTerminar={() => undefined} />
-          {item.rol_contacto !== "gerente" && <DialogoGerente contactoId={item.contacto_id} nombreRecepcion={item.nombre} alTerminar={alTerminar} />}
+          {item.rol_contacto !== "gerente" && (
+            <DialogoGerente contactoId={item.contacto_id} nombreRecepcion={item.nombre} alTerminar={(id) => (id ? alSeguir(id) : alTerminar())} />
+          )}
           {item.estado !== "REUNION_AGENDADA" && (
             <DialogoReunion
               contactoId={item.contacto_id}

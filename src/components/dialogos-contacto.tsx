@@ -90,7 +90,18 @@ export function DialogoRespuesta({ contactoId, disparador, alTerminar }: { conta
   );
 }
 
-export function DialogoGerente({ contactoId, nombreRecepcion, disparador, alTerminar }: { contactoId: string; nombreRecepcion?: string | null; disparador?: Disparador; alTerminar?: () => void }) {
+export function DialogoGerente({
+  contactoId,
+  nombreRecepcion,
+  disparador,
+  alTerminar,
+}: {
+  contactoId: string;
+  nombreRecepcion?: string | null;
+  disparador?: Disparador;
+  /** Recibe el ID del contacto nuevo del gerente. */
+  alTerminar?: (nuevoId?: string) => void;
+}) {
   const [abierto, setAbierto] = useState(false);
   const [d, setD] = useState({ nombre: "", cargo: "", telefono: "", correo: "", canal: "WhatsApp", nombreRecepcion: nombreRecepcion ?? "" });
   const [pendiente, iniciar] = useTransition();
@@ -152,9 +163,10 @@ export function DialogoGerente({ contactoId, nombreRecepcion, disparador, alTerm
             disabled={!valido || pendiente}
             onClick={() =>
               iniciar(async () => {
-                if (avisar(await gerenteConseguido(contactoId, d))) {
+                const r = await gerenteConseguido(contactoId, d);
+                if (avisar(r)) {
                   setAbierto(false);
-                  alTerminar?.();
+                  alTerminar?.(r.id);
                 }
               })
             }

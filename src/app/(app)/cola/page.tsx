@@ -1,3 +1,4 @@
+import { plural } from "@/lib/utils";
 import { Inbox, PartyPopper } from "lucide-react";
 import { Encabezado, Pagina, Vacio } from "@/components/comunes";
 import { Progress } from "@/components/ui/progress";
@@ -29,7 +30,9 @@ export default async function ColaPage() {
         descripcion={
           cola.feriado
             ? "Hoy es feriado o fin de semana: no se envían mensajes nuevos."
-            : `${pendientes} seguimientos y respuestas · ${nuevos} nuevos${cola.fueraDeLimite ? ` · ${cola.fueraDeLimite} esperan al próximo día` : ""}`
+            : `${plural(pendientes, "seguimiento o respuesta", "seguimientos y respuestas")} · ${plural(nuevos, "nuevo", "nuevos")}${
+                cola.fueraDeLimite ? ` · ${cola.fueraDeLimite} ${cola.fueraDeLimite === 1 ? "espera" : "esperan"} al próximo día` : ""
+              }`
         }
       >
         <div className="w-full space-y-1.5 sm:w-56">

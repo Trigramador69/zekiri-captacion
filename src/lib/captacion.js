@@ -30,7 +30,7 @@ const SECTOR_FRASE = {
   Agro: 'agroindustria',
 };
 
-const SECTORES_PRIORITARIOS = ['Comercio / importación', 'Salud', 'Logística', 'Industria', 'Educación'];
+const SECTORES_PRIORITARIOS = ['Comercio / importación', 'Salud', 'Logística', 'Industria', 'Educación', 'Agro', 'Construcción / inmobiliaria'];
 
 const UMBRALES_DEFECTO = { revisionBase: 5, A: 11, B: 7 };
 

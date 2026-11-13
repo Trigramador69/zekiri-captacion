@@ -278,7 +278,7 @@ export async function gerenteConseguido(
       ctx,
       usuario
     );
-    return { ok: true, mensaje: `Gerente agregado (${nuevoId}). Ya está en la cola de hoy.` };
+    return { ok: true, mensaje: `Gerente agregado (${nuevoId}). Ya está en la cola de hoy.`, id: nuevoId };
   });
 }
 
