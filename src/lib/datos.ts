@@ -27,21 +27,32 @@ export const contexto = cache(async () => {
   return cargarContexto(sb);
 });
 
+/** Cuántos de esos contactos son de recepción: solo esos primeros mensajes (en frío) cuentan en el límite diario. */
+async function primerosEnviosEnFrio(sb: Awaited<ReturnType<typeof usuarioActual>>["sb"], ids: (string | null)[]) {
+  const unicos = [...new Set(ids.filter(Boolean))] as string[];
+  if (!unicos.length) return 0;
+  const { data } = await sb.from("contactos").select("contacto_id, rol_contacto").in("contacto_id", unicos);
+  const frio = new Set((data ?? []).filter((c) => !CAP.esDerivado(c)).map((c) => c.contacto_id));
+  return ids.filter((id) => id && frio.has(id)).length;
+}
+
 export const contadores = cache(async () => {
   const { sb } = await usuarioActual();
   const ctx = await contexto();
   const umbral = Number(ctx.config.umbral_revision_base) || 5;
   const h = hoy();
-  const [pend, nuevos, enviadosHoy, revisar, resp] = await Promise.all([
+  const [pend, nuevos, derivados, primerosHoy, revisar, resp] = await Promise.all([
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).in("estado", ESTADOS_ACCIONABLES.filter((e) => e !== "LISTO")).lte("fecha_proxima", h),
-    sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("estado", "LISTO").lte("fecha_proxima", h),
-    sb.from("eventos").select("id", { count: "exact", head: true }).eq("estado_anterior", "LISTO").neq("estado_nuevo", "LISTO").gte("fecha", `${h}T00:00:00-04:00`),
+    sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("estado", "LISTO").eq("rol_contacto", "recepcion").lte("fecha_proxima", h),
+    sb.from("contactos").select("contacto_id", { count: "exact", head: true }).eq("estado", "LISTO").neq("rol_contacto", "recepcion").lte("fecha_proxima", h),
+    sb.from("eventos").select("contacto_id").eq("estado_anterior", "LISTO").neq("estado_nuevo", "LISTO").gte("fecha", `${h}T00:00:00-04:00`),
     sb.from("empresas").select("place_id", { count: "exact", head: true }).eq("estado_empresa", "NUEVA").or(filtroRevisar(umbral)),
     sb.from("contactos").select("contacto_id", { count: "exact", head: true }).in("estado", ["RESPONDIO", "LI_CONECTADO"]),
   ]);
-  // Igual que la cola: los nuevos no pasan del límite del día.
-  const cupo = Math.max(0, limiteNuevos(ctx, h) - (enviadosHoy.count ?? 0));
-  const cola = (pend.count ?? 0) + Math.min(nuevos.count ?? 0, cupo);
+  // Igual que la cola: los nuevos de recepción no pasan del límite del día; los derivados (gerentes) no cuentan.
+  const enviadosHoy = await primerosEnviosEnFrio(sb, (primerosHoy.data ?? []).map((e) => e.contacto_id));
+  const cupo = Math.max(0, limiteNuevos(ctx, h) - enviadosHoy);
+  const cola = (pend.count ?? 0) + (derivados.count ?? 0) + Math.min(nuevos.count ?? 0, cupo);
   return { cola, revisar: revisar.count ?? 0, respondieron: resp.count ?? 0 };
 });
 
@@ -57,14 +68,17 @@ export async function colaDelDia() {
   const [cs, ex, envHoy] = await Promise.all([
     sb.from("contactos").select("*, empresas(*)").in("estado", ESTADOS_ACCIONABLES).or(`fecha_proxima.lte.${h},fecha_proxima.is.null`),
     sb.from("exclusion").select("telefono_e164, place_id, linkedin_url, correo"),
-    sb.from("eventos").select("id, estado_anterior, estado_nuevo, primer_contacto").gte("fecha", inicioDia),
+    sb.from("eventos").select("id, contacto_id, estado_anterior, estado_nuevo, primer_contacto").gte("fecha", inicioDia),
   ]);
   const contactos = (cs.data ?? []) as ContactoConEmpresa[];
   const empresasPorPlace: Record<string, Empresa & { prioridad: string }> = {};
   for (const c of contactos) if (c.empresas) empresasPorPlace[c.empresas.place_id] = { ...c.empresas, prioridad: prioridadDe(c.empresas, ctx) };
 
   const eventosHoy = envHoy.data ?? [];
-  const nuevosHoy = eventosHoy.filter((e) => e.estado_anterior === "LISTO" && e.estado_nuevo !== "LISTO").length;
+  const nuevosHoy = await primerosEnviosEnFrio(
+    sb,
+    eventosHoy.filter((e) => e.estado_anterior === "LISTO" && e.estado_nuevo !== "LISTO").map((e) => e.contacto_id)
+  );
   const enviosHoy = eventosHoy.filter((e) => e.estado_nuevo === "SEGUIMIENTO_ENVIADO" || (CAP.FASES[e.estado_nuevo] && e.estado_anterior !== e.estado_nuevo)).length;
   const limite = limiteNuevos(ctx, h);
 
@@ -76,7 +90,8 @@ export async function colaDelDia() {
   const items: ItemCola[] = r.cola.map((c) => ({
     ...c,
     vencido: c.estado !== "LISTO" && !!c.fecha_proxima && c.fecha_proxima < h,
-    tipo: c.estado === "LISTO" ? "nuevo" : "pendiente",
+    // Un gerente que nos pasaron se trabaja como respuesta pendiente, no como chat nuevo.
+    tipo: c.estado === "LISTO" && !CAP.esDerivado(c) ? "nuevo" : "pendiente",
   }));
   return {
     items,

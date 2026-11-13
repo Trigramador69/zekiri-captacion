@@ -584,10 +584,18 @@ const ESTADOS_ACCIONABLES = new Set([
  * contactos: filas de `contactos`; empresasPorPlace: { place_id: fila empresa }.
  * Devuelve { cola, cerrar, excluidos, fueraDeLimite }.
  *  - cerrar: contactos con plazo vencido y sin mensajes restantes (se cierran solos).
- *  - cola: primero pendientes (seguimientos y otras acciones vencidas), luego nuevos A y B.
+ *  - cola: primero contactos derivados (gerentes u otros que nos pasaron), luego pendientes
+ *    (seguimientos y otras acciones vencidas), luego nuevos A y B.
+ *  - El límite diario solo aplica a los nuevos de recepción (mensajes en frío). Un derivado no es
+ *    un contacto en frío y hay que escribirle en menos de 24 h, así que no cuenta ni se queda afuera.
  */
+function esDerivado(c) {
+  return Boolean(c.rol_contacto) && c.rol_contacto !== 'recepcion';
+}
+
 function armarCola(contactos, { hoy = hoyBolivia(), exclusion = [], empresasPorPlace = {}, limiteNuevos = 20 } = {}) {
   const idx = indiceExclusion(exclusion);
+  const derivados = [];
   const pendientes = [];
   const nuevos = [];
   const cerrar = [];
@@ -608,7 +616,9 @@ function armarCola(contactos, { hoy = hoyBolivia(), exclusion = [], empresasPorP
       continue;
     }
     const item = { ...c, prioridad: emp.prioridad || prioridad(emp.puntaje_final) || '', dato_personalizacion: emp.dato_personalizacion || '' };
-    if (c.estado === 'LISTO') {
+    if (c.estado === 'LISTO' && esDerivado(c)) {
+      derivados.push(item);
+    } else if (c.estado === 'LISTO') {
       if (item.prioridad === 'C') continue;
       nuevos.push(item);
     } else {
@@ -619,7 +629,7 @@ function armarCola(contactos, { hoy = hoyBolivia(), exclusion = [], empresasPorP
   pendientes.sort((a, b) => String(normalizarFecha(a.fecha_proxima)).localeCompare(String(normalizarFecha(b.fecha_proxima))));
   nuevos.sort((a, b) => (ordenPrioridad[a.prioridad] ?? 2) - (ordenPrioridad[b.prioridad] ?? 2));
   return {
-    cola: [...pendientes, ...nuevos.slice(0, limiteNuevos)],
+    cola: [...derivados, ...pendientes, ...nuevos.slice(0, limiteNuevos)],
     cerrar,
     excluidos,
     fueraDeLimite: nuevos.slice(limiteNuevos),
@@ -632,7 +642,7 @@ const API = {
   normalizarTelefono, esWebPropia, normalizarNombre, contarSucursales, puntajeBase, prioridad, canalInicial, mapearPlace,
   rellenarPlantilla, insertarDato, waLink, variablesMensaje,
   detectarBaja, indiceExclusion, estaExcluido,
-  elegirPrimeraPlantilla, procesarEvento, armarCola,
+  elegirPrimeraPlantilla, procesarEvento, armarCola, esDerivado,
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = API;

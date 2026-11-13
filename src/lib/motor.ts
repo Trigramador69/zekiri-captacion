@@ -31,6 +31,8 @@ type CapApi = {
   elegirPrimeraPlantilla(c: any): { plantilla: string; accion: string };
   procesarEvento(c: any, ev: any, ctx: any): any;
   armarCola(contactos: any[], opts: any): any;
+  /** Contacto que nos pasaron (gerente u otro): no es mensaje en frío, no cuenta en el límite diario. */
+  esDerivado(c: { rol_contacto?: string | null }): boolean;
 };
 const CAP = CAPjs as unknown as CapApi;
 
