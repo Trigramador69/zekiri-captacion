@@ -16,6 +16,7 @@ import { esVirtual, fechaBolivia, horaAviso, horaBolivia24, telLegible, varsReun
 import { actualizarEvento, cancelarEvento, crearEvento, descifrar, googleConfigurado, revocar, tokenDe, type EventoReunion } from "@/lib/google";
 import { ejecutarTareas } from "@/lib/tareas";
 import { headers } from "next/headers";
+import { OBJECIONES } from "@/lib/constantes";
 import type { Contexto } from "@/lib/tipos";
 import type { Contacto, Empresa } from "@/lib/tipos";
 
@@ -224,6 +225,16 @@ export async function registrarRespuesta(contactoId: string, texto: string, obje
     // Si el estado no cambia (p. ej. ya estaba en RESPONDIO), igual vuelve a la cola de hoy para contestar.
     const extra = { ultima_respuesta: texto, fecha_proxima: CAP.hoyBolivia(), proxima_accion: "Responder hoy", ...(objecion ? { objecion } : {}) };
     const r = await aplicarEvento(sb, contactoId, { tipo: "respuesta", texto }, { usuario, extra, nota: texto.slice(0, 280) });
+    // Si eligió una objeción con plantilla, el siguiente mensaje es la respuesta a esa objeción (no el paso normal del embudo).
+    const obj = objecion ? OBJECIONES[objecion] : undefined;
+    if (obj?.plantilla && r.estado !== "NO_CONTACTAR") {
+      const ctx = await cargarContexto(sb);
+      const { data: c } = await sb.from("contactos").select("*, empresas(*)").eq("contacto_id", contactoId).single();
+      if (c) {
+        const m = renderMensaje(obj.plantilla, ctx, c.empresas as Empresa, c);
+        await sb.from("contactos").update({ mensaje_siguiente: m.texto, proxima_accion: `Responder: ${obj.etiqueta.toLowerCase()}` }).eq("contacto_id", contactoId);
+      }
+    }
     return { ok: true, mensaje: r.estado === "NO_CONTACTAR" ? "Pidió no recibir mensajes: pasó a No contactar" : "Respuesta registrada", avisos: r.avisos };
   });
 }
